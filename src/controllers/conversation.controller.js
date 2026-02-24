@@ -47,15 +47,29 @@ export const createOrGetConversation = asyncHandler(async (req, res) => {
     );
 });
 
-export const getUserConversations = async (req, res) => {
-    const userId = req.user._id;
-  
+export const getUserConversations = asyncHandler(async (req, res) => {
+
+    const clerkId = req.user?.sub;
+
+    if (!clerkId) {
+        throw new ApiError(401, "Unauthorized request");
+    }
+
+    // Find logged-in user in MongoDB
+    const user = await User.findOne({ clerkId });
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
     const conversations = await Conversation.find({
-      participants: userId
+        participants: user._id
     })
-      .populate("participants", "email")
-      .populate("lastMessage")
-      .sort({ updatedAt: -1 });
-  
-    res.json(conversations);
-  };
+        .populate("participants", "email")
+        .populate("lastMessage")
+        .sort({ updatedAt: -1 });
+
+    return res.json(
+        conversations
+    );
+});
