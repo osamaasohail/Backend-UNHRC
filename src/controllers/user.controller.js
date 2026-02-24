@@ -31,7 +31,6 @@ const registerUser = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse(201, newUser, "User created successfully")
       );
-
 });
 
 const getUserData = asyncHandler(async (req, res) => {

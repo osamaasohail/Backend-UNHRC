@@ -17,9 +17,9 @@ export const createOrGetConversation = asyncHandler(async (req, res) => {
     if (!receiverId) {
         throw new ApiError(400, "Receiver id required");
     }
-    const senderUser = await User.findOne({ clerkId });
+    const loginUser = await User.findOne({ clerkId });
 
-    if (!senderUser) {
+    if (!loginUser) {
         throw new ApiError(404, "Sender user not found");
     }
     const receiverUser = await User.findById(receiverId);
@@ -28,7 +28,7 @@ export const createOrGetConversation = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Receiver user not found");
     }
     const participants = [
-        senderUser._id.toString(),
+        loginUser._id.toString(),
         receiverUser._id.toString()
     ].sort();
 
@@ -36,12 +36,14 @@ export const createOrGetConversation = asyncHandler(async (req, res) => {
         participants: { $all: participants }
     });
 
+    console.log("Existing conversation:", conversation);
+
     if (!conversation) {
         conversation = await Conversation.create({
             participants
         });
     }
-
+    console.log("Existing conversation:", conversation);
     return res.status(200).json(
         new ApiResponse(200, conversation, "Conversation fetched successfully")
     );
@@ -72,4 +74,37 @@ export const getUserConversations = asyncHandler(async (req, res) => {
     return res.json(
         conversations
     );
+});
+
+export const getConversationById = asyncHandler(async (req, res) => {
+
+    const { conversationId } = req.params;
+
+    const clerkId = req.user?.sub;
+
+    const loginUser = await User.findOne({ clerkId });
+
+    if (!loginUser) {
+        throw new ApiError(401, "Unauthorized");
+    }
+
+    const conversation = await Conversation.findById(conversationId)
+        .populate("participants", "email");
+
+    if (!conversation) {
+        throw new ApiError(404, "Conversation not found");
+    }
+
+    /*
+    Find other user
+    */
+
+    const otherUser = conversation.participants.find(
+        p => p._id.toString() !== loginUser._id.toString()
+    );
+
+    return res.json({
+        conversation,
+        otherUser
+    });
 });
