@@ -6,20 +6,25 @@ import { Conversation, Message } from "../models/chat.model.js";
 
 
 const getChatUsers = asyncHandler(async (req, res) => {
-  const loggedInUser = req.user;
 
-  if (!loggedInUser) {
+  const clerkId = req.user?.sub;
+
+  if (!clerkId) {
     throw new ApiError(401, "Unauthorized request");
   }
+  const loggedInUser = await User.findOne({ clerkId });
 
-  // Exclude current logged-in user
+  if (!loggedInUser) {
+    throw new ApiError(404, "User not found");
+  }
+
   const users = await User.find({
-    _id: { $ne: loggedInUser._id },
-  }).select("_id email"); // only return id & email
+    _id: { $ne: loggedInUser._id }
+  }).select("_id email");
+
 
   return res.status(200).json(
     new ApiResponse(200, users, "Users fetched successfully")
-
   );
 });
 

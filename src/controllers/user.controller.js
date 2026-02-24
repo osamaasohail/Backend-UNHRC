@@ -44,7 +44,8 @@ const getUserData = asyncHandler(async (req, res) => {
 
     
     res.status(200).json(new ApiResponse(200, {
-        userId: user.clerkId,
+            _id: user._id,
+            userId: user.clerkId,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
