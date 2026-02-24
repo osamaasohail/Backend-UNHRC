@@ -52,7 +52,7 @@ export const initSocket = (io) => {
       const conversation = await Conversation.findByIdAndUpdate(
         conversationId,
         { lastMessage: message._id },
-        { new: true }
+        { returnDocument: "after" }
       ).populate("participants lastMessage");
     
       /*
