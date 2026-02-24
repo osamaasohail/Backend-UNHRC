@@ -20,9 +20,11 @@ app.use(cookieParser());
 
 import userRoutes from "./routes/user.routes.js";
 import clerkRoutes from "./routes/clerk.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
 
 app.use("/users", userRoutes);
 app.use("/webhooks", clerkRoutes);
+app.use("/chats",chatRoutes);
 
 
 
