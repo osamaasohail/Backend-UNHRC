@@ -63,11 +63,18 @@ export const initSocket = (io) => {
       /*
       ✅ Dashboard Realtime Update (VERY IMPORTANT)
       */
-      conversation.participants.forEach(user => {
-        io.to(user._id.toString()).emit(
-          "dashboard_message_update"
-        );
-      });
+      if (conversation?.participants) {
+
+        conversation.participants.forEach(user => {
+      
+          if (!user?._id) return;
+      
+          io.to(user._id.toString()).emit(
+            "dashboard_message_update"
+          );
+      
+        });
+      }
     
     });
 
