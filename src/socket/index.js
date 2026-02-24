@@ -29,7 +29,7 @@ export const initSocket = (io) => {
 
       socket.join(conversationId);
 
-      console.log(`Socket ${socket.id} joined ${conversationId}`);
+      console.log(`private room  ${socket.id} joined ${conversationId}`);
     });
 
     /*

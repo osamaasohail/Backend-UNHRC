@@ -7,7 +7,6 @@ import { User } from "../models/user.model.js";
 export const createOrGetConversation = asyncHandler(async (req, res) => {
 
     const clerkId = req.user?.sub;
-    console.log("Authenticated user clerkId:", clerkId);
     if (!clerkId) {
         throw new ApiError(401, "Unauthorized request");
     }
@@ -36,14 +35,12 @@ export const createOrGetConversation = asyncHandler(async (req, res) => {
         participants: { $all: participants }
     });
 
-    console.log("Existing conversation:", conversation);
 
     if (!conversation) {
         conversation = await Conversation.create({
             participants
         });
     }
-    console.log("Existing conversation:", conversation);
     return res.status(200).json(
         new ApiResponse(200, conversation, "Conversation fetched successfully")
     );
