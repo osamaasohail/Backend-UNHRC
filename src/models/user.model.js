@@ -35,7 +35,11 @@ const userSchema = new mongoose.Schema({
     isFormSubmitted:{
         type: Boolean,
         default: false,
-    }
+    },
+    lastSeen:{
+        type: Date,
+        default: Date.now,
+    },
     
 
 },{timestamps:true});

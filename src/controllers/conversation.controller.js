@@ -86,7 +86,7 @@ export const getConversationById = asyncHandler(async (req, res) => {
     }
 
     const conversation = await Conversation.findById(conversationId)
-        .populate("participants", "email");
+        .populate("participants", "email lastSeen");
 
     if (!conversation) {
         throw new ApiError(404, "Conversation not found");
