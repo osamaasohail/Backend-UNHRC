@@ -1,8 +1,7 @@
 import { Conversation, Message } from "../models/chat.model.js";
 import { User } from "../models/user.model.js";
 
-const onlineUsers = new Set();
-const socketUserMap = new Map(); 
+const userSockets = new Map();
 
 export const initSocket = (io) => {
 
@@ -11,47 +10,36 @@ export const initSocket = (io) => {
     console.log("User connected:", socket.id);
 
     /*
-    ======================================================
-    REGISTER USER (ONLINE PRESENCE)
-    ======================================================
+    ================================
+    REGISTER USER
+    ================================
     */
     socket.on("register", async (userId) => {
 
       if (!userId) return;
-    
+
       socket.join(userId);
-    
-      onlineUsers.add(userId);
-      socketUserMap.set(socket.id, userId);
-    
-      await User.findByIdAndUpdate(userId, {
-        lastSeen: new Date()
-      });
-    
-      io.emit("online_users_update", Array.from(onlineUsers));
-    
-    });
 
-    /*
-    ======================================================
-    HEARTBEAT PRESENCE KEEP ALIVE
-    ======================================================
-    */
-    socket.on("heartbeat", async (userId) => {
+      if (!userSockets.has(userId)) {
+        userSockets.set(userId, new Set());
+      }
 
-      if (!userId) return;
+      userSockets.get(userId).add(socket.id);
 
       await User.findByIdAndUpdate(userId, {
         lastSeen: new Date()
       });
 
-      io.emit("online_users_update", Array.from(onlineUsers));
+      io.emit(
+        "online_users_update",
+        Array.from(userSockets.keys())
+      );
     });
 
     /*
-    ======================================================
-    JOIN CONVERSATION ROOM
-    ======================================================
+    ================================
+    JOIN ROOM
+    ================================
     */
     socket.on("join_conversation", (conversationId) => {
 
@@ -61,9 +49,9 @@ export const initSocket = (io) => {
     });
 
     /*
-    ======================================================
+    ================================
     SEND MESSAGE
-    ======================================================
+    ================================
     */
     socket.on("send_message", async (data) => {
 
@@ -85,9 +73,6 @@ export const initSocket = (io) => {
 
       io.to(conversationId).emit("receive_message", message);
 
-      /*
-      Dashboard refresh trigger
-      */
       if (conversation?.participants) {
 
         conversation.participants.forEach(user => {
@@ -97,34 +82,37 @@ export const initSocket = (io) => {
           io.to(user._id.toString()).emit(
             "dashboard_message_update"
           );
-
         });
       }
     });
 
     /*
-    ======================================================
+    ================================
     DISCONNECT
-    ======================================================
+    ================================
     */
     socket.on("disconnect", async () => {
 
       console.log("Socket disconnected:", socket.id);
-    
-      const userId = socketUserMap.get(socket.id);
-    
-      if (userId) {
-    
-        onlineUsers.delete(userId);
-        socketUserMap.delete(socket.id);
-    
-        await User.findByIdAndUpdate(userId, {
-          lastSeen: new Date()
-        });
-    
-        io.emit("online_users_update", Array.from(onlineUsers));
+
+      for (const [userId, socketSet] of userSockets.entries()) {
+
+        socketSet.delete(socket.id);
+
+        if (socketSet.size === 0) {
+
+          userSockets.delete(userId);
+
+          await User.findByIdAndUpdate(userId, {
+            lastSeen: new Date()
+          });
+        }
       }
-    
+
+      io.emit(
+        "online_users_update",
+        Array.from(userSockets.keys())
+      );
     });
 
   });
